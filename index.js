@@ -20,24 +20,23 @@ mongoClient.connect(() => {
 });
 
 const userSchema = joi.object({
-    email: joi.string().required(),
-    password: joi.string().required()
-  });
+    email: joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
+    password: joi.string().required(),
+});
 
-const entrieSchema = joi.object({
+const signupSchema = joi.object({
     name: joi.string().required(),
     email: joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
     password: joi.string().required(),
-  });
+});
 
 app.post("/login", async (req, res) => {
     const userInfo = req.body;
-    const validation = entrieSchema.validate(userInfo, { abortEarly: false });
+    const validation = userSchema.validate(userInfo, { abortEarly: false });
 
     if (validation.error) {
         validation.error.details.map(error => console.log(error));
-        res.status(422).send("E-mail não pode estar vazio!");
-
+        res.status(422).send("Preencha os campos corretamente!");
         return
     }
 
@@ -45,26 +44,28 @@ app.post("/login", async (req, res) => {
 		const usersCollection = db.collection(process.env.MONGO_USERS);
         const user = await usersCollection.findOne({ email: userInfo.email});
 
-        if(user && bcrypt.compareSync(password, user.password)) {
+        if(user && bcrypt.compareSync(userInfo.password, user.password)) {
             const token = uuid()
 
             await db.collection(process.env.MONGO_SESSIONS).insertOne({
                 userId: user._id,
                 token
             })
+
             res.status(200).send(token);
         } else {
-            res.status(404).send("E-mail não cadastrado!");
+            res.status(401).send("E-mail ou senha incorreta!");
             return
         }
     } catch (error) {
         res.status(500).send('A culpa foi do estagiário');
+        console.log(error)
     }
 });
 
 app.post("/sign-up", async (req, res) => {
     const userInfo = req.body;
-    const validation = entrieSchema.validate(userInfo, { abortEarly: false });
+    const validation = signupSchema.validate(userInfo, { abortEarly: false });
 
     if (validation.error) {
         validation.error.details.map(error => console.log(error));
