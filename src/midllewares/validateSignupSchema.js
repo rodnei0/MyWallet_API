@@ -5,7 +5,7 @@ export default function validateSignupSchemaMiddleware(req, res, next) {
 
     if (validation.error) {
         validation.error.details.map(error => console.log(error));
-        res.sendStatus(422);
+        res.status(422).send("Preencha os campos corretamente!");
         return
     }
 
