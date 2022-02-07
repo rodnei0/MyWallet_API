@@ -13,10 +13,19 @@ export async function login (req, res) {
         if(user && bcrypt.compareSync(userInfo.password, user.password)) {
             const token = uuid()
 
-            await db.collection(process.env.MONGO_SESSIONS).insertOne({
-                userId: user._id,
-                token
-            })
+            const session = await db.collection(process.env.MONGO_SESSIONS).findOne({ userId: user._id });
+
+            if (session) {
+                await db.collection(process.env.MONGO_SESSIONS).updateOne(
+                    { userId: user._id },
+                    { $set: { token: token }}
+                );
+            } else {
+                await db.collection(process.env.MONGO_SESSIONS).insertOne({
+                    userId: user._id,
+                    token
+                });
+            };
 
             delete userInfo.password;
 
