@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import { v4 as uuid } from 'uuid';
 import db from '../db.js';
+import { stripHtml } from "string-strip-html";
 
 export async function login (req, res) {
     const userInfo = req.body;
@@ -32,6 +33,8 @@ export async function login (req, res) {
 
 export async function signup (req, res) {
     const userInfo = req.body;
+
+    userInfo.name = stripHtml(userInfo.name).result.trim();
 
     try {
         const usersCollection = db.collection(process.env.MONGO_USERS);
