@@ -38,6 +38,7 @@ export async function getRecord (req, res) {
 
 export async function deleteRecord (req, res) {
     const { id } = req.params;
+    console.log(id);
 
     try{
         const recordsCollection = db.collection(process.env.MONGO_RECORDS);
@@ -49,6 +50,26 @@ export async function deleteRecord (req, res) {
         }
         await recordsCollection.deleteOne({ _id: new ObjectId(id) });
         
+		res.sendStatus(200);
+    } catch (error) {
+        res.status(500).send('A culpa foi do estagiário');
+        console.log(error);
+    }
+};
+
+export async function updateRecord (req, res) {
+    const { id } = req.params;
+
+    try{
+        const recordsCollection = db.collection(process.env.MONGO_RECORDS);
+        const record = await recordsCollection.findOne({ _id: new ObjectId(id) });
+
+        if (!record) {
+            res.sendStatus(404);
+            return
+        }
+
+        await recordsCollection.updateOne({ _id: new ObjectId(id) }, { $set: req.body });
 		res.sendStatus(200);
     } catch (error) {
         res.status(500).send('A culpa foi do estagiário');
